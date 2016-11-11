@@ -1,0 +1,21 @@
+"""
+求最小公倍数
+"""
+def LCM(nums):
+    a = 1
+    count = 0
+    b = 1
+    for x in nums:
+            b *= x
+    while a <= b:
+        for y in nums:
+            if a % y == 0:
+                count += 1
+        if count == len(nums):
+            break
+        else:
+            count = 0
+            a += 1
+    return a
+
+print(LCM([3, 6, 9]))
