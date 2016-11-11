@@ -1,7 +1,16 @@
 #coding:UTF-8
+"""
+这是本人学习期间制作的小工具. 功能是连接远程SSH服务器, 并能够用get, put, remove等方法操作远程文件(目录暂不支持).并能在上传文件时自动备份原文件.
+用法: python scp.py '方法' '本地文件' '远程路径(可省略,是/root/study)/文件名'
+注意:Windows下使用, 远程路径不要用"\"而要用"/" 否则会出错.
+     需要自行安装paramiko库.
+     对文件的覆盖, 无论是get还是put, 都不会提示!
+"""
+
 import os
 import paramiko
 import sys
+
 
 class scp:
     """
