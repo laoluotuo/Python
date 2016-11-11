@@ -30,7 +30,7 @@ def pingscan():
 #    print('t_start is:', t_start)
     while True :
         try:
-            p = pyping.ping('10.0.0.1', timeout=3000, count=4)
+            p = pyping.ping('10.1.1.1', timeout=3000, count=4)
         except Exception as e:
             print(e)
         if p.avg_rtt:
@@ -129,7 +129,7 @@ def alarm(arg=None):
     统计每个段和总时间,报警,并通过winrm发送消息
     """
     try:
-        opensession = winrm.Session('10.0.0.7', auth=('Luo','Welcome123456'))
+        opensession = winrm.Session('10.1.1.7', auth=('administrator','admin123'))
         now = time.time()
         if arg == 'began':
             opensession.run_cmd('msg Robert 已开机. ')
