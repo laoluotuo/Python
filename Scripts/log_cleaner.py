@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 #coding=utf-8
+#功能:删除指定目录下超过指定时间(默认3个月)的.log文件,且对超过500M的大文件做报警
+#注:脚本执行后,会把日志输出到/tmp/log_cleaner.log中
+#   若同类log文件少于5个,会跳过而不删除.可在cleaner函数中修改该参数
 
 import os
 import logging
@@ -42,8 +45,12 @@ def file_scanner(path, ext_name='.log', path_except=path_except, time_range=2592
 
 
 def file_sorter(files): #文件分类器, 对单一目录下的文件按文件名头分类, 返回格式为(文件头:文件列表)格式字典
-    file_types = { os.path.split(f)[1][:3] for f in files }  #取出文件名的头三位字符用于文件分类
-    sorted_files = { f_type:[] for f_type in file_types}     #每类文件添加一个空列表
+    sorted_files = dict()
+    file_types = set()
+    for f in files:
+        file_types.add(os.path.split(f)[1][:3]) #取出文件名的头三位字符用于文件分类
+    for f_type in file_types:
+        sorted_files[f_type] = [] #每类文件添加一个空列表
     for f in files:
         sorted_files[os.path.split(f)[1][:3]].append(f)
     return sorted_files
