@@ -78,7 +78,6 @@ def main(path, time_range=2592000): #执行删除操作,并屏幕输出日志,�
     logging.warning('删除操作完成.')
     for file in scan_res[1]:
         logging.warning('发现超大文件: %s, 大小: %sMB  需手动处理' % (file, os.stat(file).st_size /1048576))
-    logging.warning('清理完成.')
 
 
 
@@ -91,3 +90,4 @@ if __name__ == '__main__':
     ]
     for path in paths:
         main(path, time_range=7776000)
+    logging.warning('清理完成.')
