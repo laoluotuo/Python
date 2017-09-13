@@ -56,9 +56,9 @@ def file_sorter(files): #文件分类器, 对单一目录下的文件按文件�
     return sorted_files
 
 
-def cleaner(folder, files): #文件清理器, 按文件最后写时间删除文件. 默认保留最近一个月的
-    if len(files) < 10:
-        logging.info('目录%s 下类似于 %s 的文件少于5个,久未更新或非每日日志?已略过' % (folder, files[0]))
+def cleaner(folder, files, file_keep=5): #文件清理器, 按文件最后写时间删除文件. 默认保留最近一个月的
+    if len(files) < file_keep:
+        logging.info('目录%s 下类似于 %s 的文件少于%s个,久未更新或非每日日志?已略过' % (folder, files[0], file_keep))
     else:
         for f in sorted(files):
             os.remove(f)
