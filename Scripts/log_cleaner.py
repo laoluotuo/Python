@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 #coding=utf-8
-#功能:删除指定目录下超过指定时间(默认3个月)的.log文件,且对超过500M的大文件做报警
+#功能:删除指定目录下超过指定时间(默认1个月)的.log文件,且对超过500M的大文件做报警
 #注:脚本执行后,会把日志输出到/tmp/log_cleaner.log中
 #   若同类log文件少于5个,会跳过而不删除.可在cleaner函数中修改该参数
 
 import os
 import logging
 import time
+import argparse
 
 
 log_name = '/tmp/log_cleaner.log'
@@ -30,11 +31,11 @@ def file_scanner(path, ext_name='.log', path_except=path_except, time_range=2592
             root_abs = os.path.abspath(root)
             for file in files:
                 file_path = os.path.join(root_abs, file)
-                size = os.stat(file_path).st_size
-                if os.path.islink(file_path) or root_abs.startswith(path_except):
+                if root_abs.startswith(path_except) or os.path.islink(file_path):
                     continue
                 elif file.endswith(ext_name) and current_time - os.stat(file_path).st_mtime > time_range:
                     file_list.append(file_path)
+                size = os.stat(file_path).st_size
                 if size > 524288000 :
                     bigfiles.append(file_path)
             if file_list:
@@ -65,29 +66,37 @@ def cleaner(folder, files, file_keep=5): #文件清理器, 按文件最后写时
             logging.warning('已删除文件: %s' % f)
 
 
-def main(path, time_range=2592000): #执行删除操作,并屏幕输出日志,默认时间范围time_range为大于一个月(2592000秒)
+def main(path, path_except, time_range=2592000): #执行删除操作,并屏幕输出日志,默认时间范围time_range为大于一个月(2592000秒)
     if not os.path.exists(path):
         logging.warning('路径 %s 不存在,跳过...' % path)
         return 
     logging.warning('>>>开始删除 %s 下过期文件...' % path)
 
-    scan_res = file_scanner(path, time_range=time_range)
+    scan_res = file_scanner(path, path_except=path_except, time_range=time_range)
     for folder, files in scan_res[0].items():
         for _, sub_files in file_sorter(files).items():
             cleaner(folder, sub_files)
     logging.warning('删除操作完成.')
     for file in scan_res[1]:
-        logging.warning('发现超大文件: %s, 大小: %sMB  需手动处理' % (file, os.stat(file).st_size /1048576))
+        logging.warning('发现超大文件: %s, 大小: %sMB  需手动处理' % (file, os.stat(file).st_size / 1048576))
 
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='本脚本用于删除指定目录下超过指定时间(默认3个月)的.log文件,且对超过500M的大文件做报警')
+    parser.add_argument('-e',  action='store', help='要排除的路径', type=str, default='0')
+    args = parser.parse_args()
+    except_path = args.e
     paths = [
         '/data',
         '/opt',
         '/var',
         '/usr/local'
     ]
+    if except_path != '0':
+        path_except += (except_path, )
+        if except_path in paths:
+            paths.remove(except_path)
     for path in paths:
-        main(path, time_range=7776000)
+        main(path, path_except, time_range=2592000)
     logging.warning('清理完成.')
