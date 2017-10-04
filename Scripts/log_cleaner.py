@@ -20,18 +20,21 @@ logging.basicConfig(
 )
 
 
-def file_scanner(path, ext_name='.log', path_except=path_except, time_range=2592000): #文件扫描器, 返回格式为(目录名, 文件列表)的字典
+def file_scanner(path, path_except, ext_name='.log', time_range=2592000): #文件扫描器, 返回格式为(目录名, 文件列表)的字典
     os.chdir(path)
     file_objects = dict()
     bigfiles = []
     current_time = time.time()
     try:
-        for root, dirs, files in os.walk('.'):
+        for root, dirs, files in os.walk(path):
             file_list = []
-            root_abs = os.path.abspath(root)
+            for dir in path_except:
+                rt, sub = os.path.split(dir)    #拆分排除路径, 比较当前迭代器中是否有它
+                if  rt == root and sub in dirs:
+                    dirs.remove(sub)
             for file in files:
-                file_path = os.path.join(root_abs, file)
-                if root_abs.startswith(path_except) or os.path.islink(file_path):
+                file_path = os.path.join(root, file)
+                if root.startswith(path_except) or os.path.islink(file_path):
                     continue
                 elif file.endswith(ext_name) and current_time - os.stat(file_path).st_mtime > time_range:
                     file_list.append(file_path)
@@ -39,7 +42,7 @@ def file_scanner(path, ext_name='.log', path_except=path_except, time_range=2592
                 if size > 524288000 :
                     bigfiles.append(file_path)
             if file_list:
-                file_objects[root_abs] = file_list
+                file_objects[root] = file_list
     except Exception as e:
         logging.warning(e)
     return (file_objects, bigfiles)
@@ -83,7 +86,7 @@ def main(path, path_except, time_range=2592000): #执行删除操作,并屏幕�
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='本脚本用于删除指定目录下超过指定时间(默认3个月)的.log文件,且对超过500M的大文件做报警')
+    parser = argparse.ArgumentParser(description='本脚本用于删除指定目录下超过指定时间(默认1个月)的.log文件,且对超过500M的大文件做报警')
     parser.add_argument('-e',  action='store', help='要排除的路径', type=str, default='0')
     args = parser.parse_args()
     except_path = args.e
