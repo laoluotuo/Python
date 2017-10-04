@@ -15,16 +15,19 @@ logging.basicConfig(
 path_except = ('/proc', '/sys', '/dev')
 
 
-def file_scanner(path, ext_name='.out', path_except=path_except): #文件扫描器, 返回格式为(目录名, 文件列表)的字典
+def file_scanner(path, path_except, ext_name='.out'): #文件扫描器, 返回格式为(目录名, 文件列表)的字典
     os.chdir(path)
     bigfiles = []
     try:
-        for root, dirs, files in os.walk('.'):
-            root_abs = os.path.abspath(root)
+        for root, dirs, files in os.walk(path):
+            for dir in path_except:
+                rt, sub = os.path.split(dir)    #拆分排除路径, 比较当前迭代器中是否有它
+                if  rt == root and sub in dirs:
+                    dirs.remove(sub)
             for file in files:
-                file_path = os.path.join(root_abs, file)
+                file_path = os.path.join(root, file)
                 size = os.stat(file_path).st_size
-                if os.path.islink(file_path) or root_abs.startswith(path_except):
+                if os.path.islink(file_path) or root.startswith(path_except):
                     continue
                 elif file.endswith(ext_name) and size > 524288000:
                     bigfiles.append(file_path)
@@ -40,7 +43,7 @@ def file_scanner(path, ext_name='.out', path_except=path_except): #文件扫描�
 
 def file_cutter(big_file):
     temp_f = tempfile.NamedTemporaryFile(delete=True)
-    logging.warning('>>>开始消减 %s' % big_file)
+    logging.warning('>>>开始缩减 %s' % big_file)
 
     with open(big_file, 'r+') as f:
         try:
@@ -55,7 +58,7 @@ def file_cutter(big_file):
         with open(temp_f.name, 'r') as t:
             for line in t:
                 f.write(line)
-    logging.warning('文件已削减,当前大小: %sM' % (os.stat(big_file).st_size / 1048576))
+    logging.warning('文件已缩减,当前大小: %sM' % (os.stat(big_file).st_size / 1048576))
     temp_f.close()
 
 
@@ -64,17 +67,19 @@ def main(path, ext_name='.out', path_except=path_except):
         logging.warning('路径 %s 不存在,跳过...' % path)
         return
     logging.warning('>>>正在搜索 %s 下超大文件...' % path)
-    scan_res = file_scanner(path,  ext_name, path_except)
+    scan_res = file_scanner(path, path_except, ext_name)
     for big_file in scan_res:
         file_cutter(big_file)
 
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='本脚本用于遍历并削减特定扩展名的大文件')
-    parser.add_argument('-e',  action='store', help='需削减文件的扩展名', type=str, default='.out')
+    parser = argparse.ArgumentParser(description='本脚本用于遍历并缩减特定扩展名的大文件')
+    parser.add_argument('-t',  action='store', help='需缩减文件的扩展名', type=str, default='.out')
+    parser.add_argument('-e',  action='store', help='要排除的路径名', type=str, default='0')
     args = parser.parse_args()
-    ext_name = args.e
+    ext_name = args.t
+    except_path = args.e
 
     paths = [
         '/data',
@@ -83,6 +88,10 @@ if __name__ == '__main__':
         '/home',
         '/usr/local'
     ]
+    if except_path != '0':
+        path_except += (except_path, )
+        if except_path in paths:
+            paths.remove(except_path)
     for path in paths:
-        main(path, ext_name)
-    logging.warning('大文件削减完成.')
+        main(path, ext_name, path_except)
+    logging.warning('大文件缩减完成.')
