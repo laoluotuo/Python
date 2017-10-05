@@ -10,15 +10,6 @@ import time
 import argparse
 
 
-log_name = '/tmp/log_cleaner.log'
-path_except = ('/proc', '/sys', '/dev')
-logging.basicConfig(
-    level = logging.WARNING,
-    format = '%(asctime)s : %(levelname)s : %(message)s',
-    filename = log_name,
-    filemode = 'w'
-)
-
 
 def file_scanner(path, path_except, ext_name='.log', time_range=2592000): #文件扫描器, 返回格式为(目录名, 文件列表)的字典
     os.chdir(path)
@@ -88,18 +79,52 @@ def main(path, path_except, time_range=2592000): #执行删除操作,并屏幕�
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='本脚本用于删除指定目录下超过指定时间(默认1个月)的.log文件,且对超过500M的大文件做报警')
     parser.add_argument('-e',  action='store', help='要排除的路径', type=str, default='0')
+    parser.add_argument('-f',  action='store', help='排除路径的配置文件', type=str, default='except_paths.txt')
+    parser.add_argument('-v',  action='store_true', help='显示log信息,而非存储到文件')
     args = parser.parse_args()
     except_path = args.e
+    except_file = args.f
+    verbose = args.v
+
+    #以下为预定义变量
     paths = [
         '/data',
         '/opt',
         '/var',
         '/usr/local'
     ]
-    if except_path != '0':
+    path_except = ('/proc', '/sys', '/dev')
+    log_name = '/tmp/log_cleaner.log'
+
+
+    if verbose:                     #日志控制台显示或写入文件
+        logging.basicConfig(
+            level = logging.WARNING,
+            format = '%(asctime)s : %(levelname)s : %(message)s',
+        )
+    else:
+        logging.basicConfig(
+            level = logging.WARNING,
+            format = '%(asctime)s : %(levelname)s : %(message)s',
+            filename = log_name,
+            filemode = 'w'
+        )
+
+    if except_path != '0':          #添加排除路径
         path_except += (except_path, )
         if except_path in paths:
             paths.remove(except_path)
-    for path in paths:
+
+    except_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), except_file)
+    if os.path.exists(except_file): #路径排除文件处理
+        content = open(except_file, 'r').readlines()
+        if content:
+            path_except += tuple([line.strip() for line in content])
+            for ex in [line.strip() for line in content]:
+                if ex in paths:
+                    paths.remove(ex)
+    # logging.warning('当前except_path: %s' % ' '.join(path_except))
+
+    for path in paths:              #执行日志清理主函数
         main(path, path_except, time_range=2592000)
     logging.warning('清理完成.')
