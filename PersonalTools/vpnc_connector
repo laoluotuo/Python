@@ -28,13 +28,13 @@ def nic_tester():
     """
     检查网卡数和名字,确认vpn是否已连接,若你有两块及以上网卡,请将下面的数字都+1
     """
-    nic = psutil.net_if_addrs()
-    nics = ' '.join([k for k in nic.keys()])
-    if len(nic) == 2:
+    nics = psutil.net_if_addrs()
+    nics = ' '.join([k for k in nics.keys()])
+    if len(nics) == 2:
         return False
-    elif len(nic) == 3 and 'tun' in nics:
+    elif len(nics) == 3 and 'tun' in nics:
         return True
-    elif len(nic) > 3:
+    elif len(nics) > 3:
         return 'BAD'
 
 
@@ -77,7 +77,7 @@ def main(ip_addrs):
                 logging.warning('VPN已在线')
                 time.sleep(180)
         elif online == 'BAD':
-            logging.warning('>>>正在重启VPN...')
+            logging.warning('>>>正出现多重连接,正在重启网卡...')
             os.system('service network restart')
             continue
 
@@ -93,8 +93,6 @@ if __name__ == '__main__':
     ip_addrs = [
         '172.x.x.130',
         '172.x.178.x',
-        'x.164.201.131',
-        'x.230.219.215',
-        'x.162.70.121'
+        'x.164.x.131',
     ]
     main(ip_addrs)
