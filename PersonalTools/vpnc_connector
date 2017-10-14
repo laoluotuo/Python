@@ -5,6 +5,7 @@
 #运行方式: nohup vpnc_connector.py &
 #日志默认路径:/var/log/vpn_connector.log.
 #脚本中用到的pyping, tendo模块可用pip安装; psutil请升级到最新版.
+#2017.10.14
 import logging
 import os
 import psutil
@@ -18,7 +19,7 @@ logging.basicConfig(
     level = logging.WARNING,
     format = '%(asctime)s : %(levelname)s : %(message)s',
     filename = '/var/log/vpn_connector.log',
-    filemode = 'w'
+    filemode = 'a'
 )
 me = tendo.singleton.SingleInstance() #确保脚本是单例运行
 
