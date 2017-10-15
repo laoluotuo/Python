@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #coding:utf-8
-#Cisco IPSec VPN连接器, 可帮助你从列表中自动选服务器并连接, 若丢包率大于35%自动切换.
+#CiscoVPN连接器, 可帮助你从列表中自动选服务器并连接, 若丢包率大于35%自动切换.
 #运行在Linux下,且需要你安装好vpnc客户端, 实现有一个完整的配置文件/etc/vpnc.conf.
 #运行方式: nohup vpnc_connector.py &
 #日志默认路径:/var/log/vpn_connector.log.
@@ -28,13 +28,13 @@ def nic_tester():
     """
     检查网卡数和名字,确认vpn是否已连接,若你有两块及以上网卡,请将下面的数字都+1
     """
-    nics = psutil.net_if_addrs()
-    nics = ' '.join([k for k in nics.keys()])
-    if len(nics) == 2:
+    nic_items = psutil.net_if_addrs()
+    nic_names = ' '.join([k for k in nic_items.keys()])
+    if len(nic_items) == 2:
         return False
-    elif len(nics) == 3 and 'tun' in nics:
+    elif len(nic_items) == 3 and 'tun' in nic_names:
         return True
-    elif len(nics) > 3:
+    elif len(nic_items) > 3:
         return 'BAD'
 
 
@@ -43,7 +43,7 @@ def net_pkg_lose_too_much():
     丢包率检测器
     """
     try:
-        res_ping = pyping.ping('8.8.8.8', count=20)
+        res_ping = pyping.ping('8.8.8.8', count=23)
         return  res_ping.packet_lost / 20.00
     except Exception as e:
         logging.warning(e)
@@ -77,7 +77,7 @@ def main(ip_addrs):
                 logging.warning('VPN已在线')
                 time.sleep(180)
         elif online == 'BAD':
-            logging.warning('>>>正出现多重连接,正在重启网卡...')
+            logging.warning('>>>出现多重连接,正在重启网卡...')
             os.system('service network restart')
             continue
 
