@@ -1,18 +1,19 @@
 #!/usr/bin/env python
 #coding:utf-8
-#CiscoVPN连接器, 可帮助你从列表中自动选服务器并连接, 若丢包率大于35%自动切换.
+#CiscoVPN连接器, 可帮助你从列表中自动选服务器并连接, 若丢包率大于50%自动切换.
 #运行在Linux下,且需要你安装好vpnc客户端, 实现有一个完整的配置文件/etc/vpnc.conf.
 #运行方式: nohup vpnc_connector.py &
 #日志默认路径:/var/log/vpn_connector.log.
 #脚本中用到的pyping, tendo模块可用pip安装; psutil请升级到最新版.
 #2017.10.14
+import copy
 import logging
 import os
 import psutil
 import pyping
-import random
 import time
 import tendo.singleton
+
 
 
 logging.basicConfig(
@@ -22,6 +23,13 @@ logging.basicConfig(
     filemode = 'a'
 )
 me = tendo.singleton.SingleInstance() #确保脚本是单例运行
+ip_addrs = [
+    '172.x.x.13',
+    '172.x.178.x',
+    'x.164.x.13',
+]
+packet_lose_rate = 0.5
+ip_addrs_copy = copy.deepcopy(ip_addrs)
 
 
 def nic_tester():
@@ -49,7 +57,7 @@ def net_pkg_lose_too_much():
         logging.warning(e)
 
 
-def connector(ip, connect=True):
+def connector(connect=True):
     """
     VPN连接器
     """
@@ -58,41 +66,40 @@ def connector(ip, connect=True):
             logging.warning('>>>开始断开VPN...')
             os.system('/usr/sbin/vpnc-disconnect')
         else:
+            global ip_addrs_copy
+            if ip_addrs_copy:
+                ip = ip_addrs_copy.pop(0)
+            else:
+                ip_addrs_copy = copy.deepcopy(ip_addrs)
+                ip = ip_addrs_copy.pop(0)
             logging.warning('>>>正在连接%s ...' % ip)
             os.system('/usr/sbin/vpnc --gateway %s /etc/vpnc.conf' % ip)
     except Exception as e:
         logging.warning(e)
 
 
-def main(ip_addrs):
+def main():
     if nic_tester():
         logging.warning('VPN当前在线')
     while True:
         online = nic_tester()
         if not online:
             logging.warning('>>>启动VPN...')
-            connector(ip_addrs[random.randrange(0, 10)])
-            time.sleep(5)
+            connector()
             if nic_tester():
                 logging.warning('VPN已在线')
-                time.sleep(180)
+                time.sleep(60)
         elif online == 'BAD':
             logging.warning('>>>出现多重连接,正在重启网卡...')
             os.system('service network restart')
             continue
 
         pkg_lose_rate = net_pkg_lose_too_much()
-        if nic_tester() and pkg_lose_rate > 0.35:
+        if nic_tester() and pkg_lose_rate > packet_lose_rate:
             logging.warning('>>>VPN在线但丢包率过高,为:%s, 需更换VPN服务器' % pkg_lose_rate)
-            connector(ip_addrs[random.randrange(0, 10)], connect=False)
+            connector(connect=False)
             continue
 
 
-
 if __name__ == '__main__':
-    ip_addrs = [
-        '172.x.x.130',
-        '172.x.178.x',
-        'x.164.x.131',
-    ]
-    main(ip_addrs)
+    main()
