@@ -52,7 +52,7 @@ def net_pkg_lose_too_much():
     """
     try:
         res_ping = pyping.ping('8.8.8.8', count=23)
-        return  res_ping.packet_lost / 20.00
+        return  res_ping.packet_lost / 23.00
     except Exception as e:
         logging.warning(e)
 
