@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #coding:utf-8
-#防篡改系统脚本.实时运行,用于实时监测目录是否发生改动(包括文件元数据),若发生改动会自动执行rysnc同步操作,拉取后端文件覆盖回来,并通过平台发送报警消息.
+#防篡改系统脚本.实时运行,用于实时监测目录是否发生改动(包括文件元数据),若发生改动会自动执行rysnc同步操作,拉取后端文件覆盖回来,并通过平台发送报警消息.注意:log_url, env变量,send_message方法没有通用性.
 import logging
 import datetime
 import inotify.adapters
