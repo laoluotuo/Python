@@ -1,6 +1,6 @@
 #!python3
 #coding:utf-8
-#该脚本功能: Windows开机后探测磁盘空置率, 若高于95%(足够空闲), 即启动测试虚拟机(会先ping探测虚拟机IP)
+#该脚本功能: 放在"启动"目录里, 随Windows启动后, 持续探测磁盘空置率, 若高于95%(足够空闲), 即启动测试虚拟机(会先ping探测虚拟机IP)
 #然后探测虚拟磁盘G是否挂载, 若已挂载, 打开Dropbox.
 import subprocess
 import psutil
